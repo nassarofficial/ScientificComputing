@@ -12,49 +12,147 @@
 #include <iostream>
 #include <vector>
 #include <time.h>
+#include <complex>
 #include <chrono>
+#include <cmath>
+#include <algorithm>
+#include <numeric>
+
 using namespace std;
 using namespace std::chrono;
 
-vector<float> gauss_seidel(vector<vector< float > > ls,vector< float > rs,int iter){
+
+double test(vector<vector<double>> points){
+    double sumx=0,sumxy=0, sumy=0,sumx2=0;
+    int n;
+    
+    n = int(points.size());
+    
+    for (int i =0 ; i<=n ; i++ ){
+            sumx=sumx+points[i][0];
+            sumy=sumy+points[i][1];
+        
+            sumxy=sumxy+points[i][0]*points[i][1];
+            sumx2=sumx2+points[i][0]*points[i][0];
+    }
+    
+    double xm=sumx/n;
+    double ym=sumy/n;
+    
+    double a1 = (n*sumxy-sumx*sumy)/(n*sumx2-sumx*sumx); //slope
+    double a0 = ym-a1*xm;	//bias
+    
+    return a0, a1;
+}
+
+
+vector<double> get_row(vector<vector< double > > C, int row){
+    int i, n;
+    vector<double> temp;
+    n = int(temp.size());
+
+    for (i=0;i<n; i++) {
+        temp.push_back(C[row][i]);
+    }
+    return temp;
+}
+
+vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs, int maxit){
+    int n,i, lambda=1.7, iter,j,k;
+    double es = 0.00001, sum, old, sentinel, ea = 0.0, dummy;
+    n = int(ls.size());
+    
+    vector< double > x;
+    x.reserve(n);
+    
+    for (i=0; i<n; i++) {
+        dummy = ls[i][i];
+        for (j=0; j<n; j++) {
+            // divide each val by diagonal
+            ls[i][j] = ls[i][j]/dummy;
+            
+        }
+        // divide right side by diagonal
+        rs[i]=rs[i]/dummy;
+    }
+    
+    for (i=0; i<n; i++) {
+        sum = rs[i];
+        for (j=0; j<n; j++) {
+            if (i != j) {
+                sum = sum - ls[i][j] * x[j];
+            }
+        }
+        x[i]=sum;
+    }
+    iter = 0;
+    
+    while (sentinel==1 or iter > maxit) {
+        sentinel = 1;
+        for (i=0; i<n; i++) {
+            old = x[i];
+            sum = rs[i];
+            for (j=0; j<n; j++) {
+                if (j != k) {
+                    sum = sum - ls[i][j]*x[j];
+                }
+            }
+            // multiply the right hand side by the parameter ω and add to it the vector x(k) from the previous iteration multiplied by the factor of (1 − ω)
+
+            x[i] = lambda*sum+(1.0-lambda)*old;
+            // Checking convergence by calculating approximate error
+            if (sentinel == 1 and x[i] != 0) {
+                ea = fabs(x[i]-old/x[i]) * 100;
+            } if (ea > es){     // exit loop if
+                sentinel = 0;
+            }
+        }
+        iter=iter+1;
+    }
+    return x;
+}
+
+
+vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int iter){
 
     int n = 0, i = 0, j = 0;
     
     n = int(ls.size());
     
-    vector< float > temp;
+    vector< double > temp;
     temp.reserve(n);
     
-    vector< float > y ;
+    vector< double > y ;
     y.reserve(n);
     
     while (iter > 0)
     {
         for (i = 0; i < n; i++)
         {
-            y[i] = (rs[i] / ls[i][i]);
+            y[i] = (rs[i] / ls[i][i]); // right hand side divided by diagonal
             for (j = 0; j < n; j++)
             {
                 if (j == i)
                     continue;
-                y[i] = y[i] - ((ls[i][j] / ls[i][i]) * temp[j]);
+                y[i] = y[i] - ((ls[i][j] / ls[i][i]) * temp[j]); // substituting the calculated values into the equations
                 
                 // Store for output
                 temp[i] = y[i];
             }
         }
+        
         iter--;
     }
 
     return temp;
 }
 
-vector<float> gauss_elimination(vector<vector< float > > a) {
+vector<double> gauss_elimination(vector<vector< double > > a) {
 
-    float cur,total,mat;
-    int i,j,k,n,p,z,y;
+    double cur,total,mat;
+    int i,j,k,n,p;
     n = int(a.size());
-    vector<float> temp;
+    vector<double> temp;
     temp.reserve(n);
     
     
@@ -97,26 +195,29 @@ int main() {
     int i, n;
     
     // Equations in a vector
-    //vector<vector< float > > a { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} };
+    //vector<vector< double > > a { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} };
     
     // 6 Equations
-    //vector<vector< float > > a { {0.6, 1, -2, 1, 3, -1, 4},{2, -1, 1, 2, 1, -3, 20},{1, 3, -3, 1, 2, 1, -15},{5, 2, -1, -1, 2, 1, -3},{-3, -1, 2, 3, 1, 3, 16},{4, 3, 1, -6, -3, -2, -27} };
+    //vector<vector< double > > a { {0.6, 1, -2, 1, 3, -1, 4},{2, -1, 1, 2, 1, -3, 20},{1, 3, -3, 1, 2, 1, -15},{5, 2, -1, -1, 2, 1, -3},{-3, -1, 2, 3, 1, 3, 16},{4, 3, 1, -6, -3, -2, -27} };
 
     // 4 Equations
-    //vector<vector< float > > a { {10, -1, 2, 0, 6},{-1, 11, -1, 3, 25},{2, -1, 10, -1, -11},{0, 3, -1, 8, 15} };
+    //vector<vector< double > > a { {10, -1, 2, 0, 6},{-1, 11, -1, 3, 25},{2, -1, 10, -1, -11},{0, 3, -1, 8, 15} };
     
     // 3 Equations
-    vector<vector< float > > a { { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} } };
+    vector<vector< double > > a { { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} } };
 
     // 2 Equations
-    //vector<vector< float > > a { {3, 2, 18},{-1, 2, 2}};
+    //vector<vector< double > > a { {3, 2, 18},{-1, 2, 2}};
     
     n = int(a.size());
     
     // Initialize vector for result
-    vector <float> res_ele;
-    vector <float> res_seidal;
+    vector <double> res_ele;
+    vector <double> res_seidal, res_seidal2;
     
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
     
     cout << "------- Gauss Elimination -------" << endl;
 
@@ -133,16 +234,17 @@ int main() {
     for(i=0; i<n; i++)
         cout << "x" << i+1 << ": " << res_ele[i] << endl;
 
-    
-    cout << "------- Gauss Seidel -------" << endl;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    cout << "------- Gauss Seidel : Jacobi -------" << endl;
     
     // 3 Equations
-    vector <vector<float>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
+    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
+    vector <double> rs = {7.85,-19.3,71.4};
     
-    vector <float> rs = {7.85,-19.3,71.4};
     // 4 Equations
-    //vector<vector<float>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
-    //vector<float> rs = {6, 25, -11, 15};
+    //vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
+    //vector<double> rs = {6, 25, -11, 15};
 
     high_resolution_clock::time_point t3 = high_resolution_clock::now();
     res_seidal = gauss_seidel(ls,rs,7);
@@ -154,6 +256,19 @@ int main() {
     for(i=0; i<n; i++)
         cout << "x" << i+1 << ": " << res_seidal[i] << endl;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    cout << "------- Gauss Seidel : SOR -------" << endl;
+
+    high_resolution_clock::time_point t5 = high_resolution_clock::now();
+    res_seidal2 = gauss_seidel_sor(ls,rs,30);
+    high_resolution_clock::time_point t6 = high_resolution_clock::now();
+    auto duration3 = duration_cast<microseconds>( t6 - t5 ).count();
+    cout << "Time:" << duration3 << " microseconds"<< endl;
+
+    // Print Out Result
+    for(i=0; i<n; i++)
+        cout << "x" << i+1 << ": " << res_seidal2[i] << endl;
     
 
     return 0;
