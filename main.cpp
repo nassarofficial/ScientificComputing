@@ -23,6 +23,29 @@ using namespace std;
 using namespace std::chrono;
 
 
+vector<double> get_row(vector<vector< double > > C, int row){
+    int i, n;
+    vector<double> temp;
+    n = int(C.size());
+    
+    for (i=0;i<n; i++) {
+        temp.push_back(C[row][i]);
+        // cout << C[row][i] << endl;
+    }
+    return temp;
+}
+
+vector<double> get_cols(vector<vector< double > > C, int col){
+    int i, n;
+    vector<double> temp;
+    n = int(C.size());
+    
+    for (i=0;i<n; i++) {
+        temp.push_back(C[i][col]);
+    }
+    return temp;
+}
+
 
 vector<double> linear_regression(vector<vector<double>> points){
     double sumx=0,sumxy=0, sumy=0,sumx2=0;
@@ -83,36 +106,16 @@ vector<vector<double> > polynomial_regression (vector<vector<double> > points,in
         B[i][n+1]=Y[i];
     n=n+1;
     
-    cout<<"The Normal Matrix"<<endl;
+    cout<<"------- The Normal Matrix -------"<<endl;
     for (i=0;i<n;i++)
     {
         for (j=0;j<=n;j++)
             cout<<B[i][j]<<"  ";
         cout<<"\n";
+        
     }
-    
+
     return B;
-}
-
-vector<double> get_row(vector<vector< double > > C, int row){
-    int i, n;
-    vector<double> temp;
-    n = int(C.size());
-    
-    for (i=0;i<n; i++) {
-        temp.push_back(C[row][i]);
-       // cout << C[row][i] << endl;
-    }
-    return temp;
-}
-
-vector<double> vec_copy(vector< double > a, vector< double > b){
-    int i,n;
-    n = int(a.size());
-    for (i=0; i<n; i++) {
-        b[i] = a[i];
-    }
-    return b;
 }
 
 vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs, int maxit, double es, double lambda){
@@ -154,7 +157,7 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
             mul = inner_product(temp.begin(), temp.end(), x.begin(), 0.0);
             x[l] = rs[l] - mul;
             
-            // multiply the right hand side by the parameter ω and add to it the vector x(k) from the previous iteration multiplied by the factor of (1 − ω)
+            // multiply the right hand side by the relaxation
 
             x[l] = lambda*x[l]+(1.0-lambda)*xold[l];
             // Checking convergence by calculating approximate error
@@ -167,8 +170,9 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
             sentinel = 0;
         }
         iter=iter+1;
-
     }
+//    cout << iter << endl;
+
     return x;
     
 }
@@ -176,7 +180,7 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
 vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int maxit){
     
     int n = 0, i = 0, j = 0, sentinel = 1, iter =0;
-    double es, maxea;
+    double es = 0.00001, maxea;
     n = int(ls.size());
     
     vector< double > temp,ea,xold,y;
@@ -215,8 +219,8 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
         }
 
         iter=iter+1;
-//        cout << iter << endl;
     }
+//    cout << iter << endl;
 
     return temp;
 }
@@ -277,7 +281,7 @@ vector<double> gauss_elimination(vector<vector< double > > a) {
 
 int main() {
   
-    int i, n,j,k;
+    int i,n,k;
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // Section 1
@@ -285,7 +289,7 @@ int main() {
     
     
     vector<vector<double>> polynomial_points {{0,1},{1,1.8},{2,1.3},{3,2.5},{4,6.3}};
-    vector<vector<double>> inter_out_normal;
+    vector<vector<double>> poly_out_normal;
     
     vector<vector<double>> linear_points {{95,85},{85,95},{80,70},{70,65},{60,70}};
     vector<double> linear_out;
@@ -296,8 +300,13 @@ int main() {
     cout << "Bias: " << linear_out[0] <<endl;
     cout << "Slope: " << linear_out[1] <<endl;
 
-    inter_out_normal = polynomial_regression(polynomial_points,2);
+    poly_out_normal = polynomial_regression(polynomial_points,2);
     
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Section 2
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // Section 3
@@ -315,7 +324,9 @@ int main() {
     // 2 Equations
     //vector<vector< double > > a { {3, 2, 18},{-1, 2, 2}};
     
-    n = int(a.size());
+    //n = int(a.size());
+    
+    n = int(poly_out_normal.size());
     
     // Initialize vector for result
     vector <double> res_ele;
@@ -324,7 +335,7 @@ int main() {
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    
+    cout<<"\n";
     cout << "------- Gauss Elimination -------" << endl;
 
     // Get result as vector
@@ -332,7 +343,7 @@ int main() {
 
     //res_ele = gauss_elimination(a);
     
-    res_ele = gauss_elimination(inter_out_normal);
+    res_ele = gauss_elimination(poly_out_normal);
 
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>( t2 - t1 ).count();
@@ -343,19 +354,29 @@ int main() {
         cout << "x" << i+1 << ": " << res_ele[i] << endl;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    cout<<"\n";
     cout << "------- Gauss Seidel : Iteration -------" << endl;
     
-//    // 3 Equations
-    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
-    vector <double> rs = {7.85,-19.3,71.4};
+    
+    res_ele = gauss_elimination(poly_out_normal);
+    
+    // 3 Equations
+//    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
+//    vector <double> rs = {7.85,-19.3,71.4};
 
+    
+    vector <vector<double>> ls {{5,10,30},{10,30,100,37.1},{30,100,354,130.3}};
+    vector <double> rs = {12.9,37.1,130.3};
+    
     // 4 Equations
 //    vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
 //    vector<double> rs = {6, 25, -11, 15};
 
+    
+    //Polynomials
+    
     high_resolution_clock::time_point t3 = high_resolution_clock::now();
-    res_seidal = gauss_seidel(ls,rs,500);
+    res_seidal = gauss_seidel(ls,rs,600);
     high_resolution_clock::time_point t4 = high_resolution_clock::now();
     auto duration2 = duration_cast<microseconds>( t4 - t3 ).count();
     cout << "Time:" << duration2 << " microseconds"<< endl;
@@ -365,11 +386,11 @@ int main() {
         cout << "x" << i+1 << ": " << res_seidal[i] << endl;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    cout<<"\n";
     cout << "------- Gauss Seidel : SOR -------" << endl;
 
     high_resolution_clock::time_point t5 = high_resolution_clock::now();
-    res_seidal2 = gauss_seidel_sor(ls,rs,500, 0.00001, 1);
+    res_seidal2 = gauss_seidel_sor(ls,rs,600, 0.00001, 1.0);
     high_resolution_clock::time_point t6 = high_resolution_clock::now();
     auto duration3 = duration_cast<microseconds>( t6 - t5 ).count();
     cout << "Time:" << duration3 << " microseconds"<< endl;
