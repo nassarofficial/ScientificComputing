@@ -15,14 +15,16 @@
 #include <complex>
 #include <chrono>
 #include <cmath>
-#include <algorithm>
+#include <iomanip>
 #include <numeric>
+#include <algorithm>
 
 using namespace std;
 using namespace std::chrono;
 
 
-double test(vector<vector<double>> points){
+
+double linear_interpolation(vector<vector<double>> points){
     double sumx=0,sumxy=0, sumy=0,sumx2=0;
     int n;
     
@@ -49,84 +51,104 @@ double test(vector<vector<double>> points){
 vector<double> get_row(vector<vector< double > > C, int row){
     int i, n;
     vector<double> temp;
-    n = int(temp.size());
-
+    n = int(C.size());
+    
     for (i=0;i<n; i++) {
         temp.push_back(C[row][i]);
+       // cout << C[row][i] << endl;
     }
     return temp;
 }
 
-vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs, int maxit){
-    int n,i, lambda=1.7, iter,j,k;
-    double es = 0.00001, sum, old, sentinel, ea = 0.0, dummy;
+vector<double> vec_copy(vector< double > a, vector< double > b){
+    int i,n;
+    n = int(a.size());
+    for (i=0; i<n; i++) {
+        b[i] = a[i];
+    }
+    return b;
+}
+
+vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs, int maxit, double es){
+    int n,i, lambda=1.7, iter,j,k,l;
+    double sentinel =1, dummy,mul,maxea;
     n = int(ls.size());
-    
-    vector< double > x;
+    vector< double > x,xold,temp,ea;
+    vector<vector< double > > C;
     x.reserve(n);
+    xold.reserve(n);
+
+    temp.reserve(n);
+    ea.reserve(n);
+
+    C = ls;
+    for (k=0; k<n; k++) {
+        C[k][k] = 0.0;
+    }
     
     for (i=0; i<n; i++) {
-        dummy = ls[i][i];
         for (j=0; j<n; j++) {
             // divide each val by diagonal
-            ls[i][j] = ls[i][j]/dummy;
+            C[i][j] = C[i][j]/ls[i][i];
             
         }
         // divide right side by diagonal
-        rs[i]=rs[i]/dummy;
+        rs[i]=rs[i]/ls[i][i];
     }
     
-    for (i=0; i<n; i++) {
-        sum = rs[i];
-        for (j=0; j<n; j++) {
-            if (i != j) {
-                sum = sum - ls[i][j] * x[j];
-            }
-        }
-        x[i]=sum;
-    }
     iter = 0;
-    
-    while (sentinel==1 or iter > maxit) {
-        sentinel = 1;
-        for (i=0; i<n; i++) {
-            old = x[i];
-            sum = rs[i];
-            for (j=0; j<n; j++) {
-                if (j != k) {
-                    sum = sum - ls[i][j]*x[j];
-                }
-            }
+
+    while (sentinel == 1 or iter <= maxit) {
+        for (int t=0; t<n; t++) {
+            xold[t] = x[t];
+        }
+        
+        for (l=0; l<n; l++) {
+            temp = get_row(C,l);
+            mul = inner_product(temp.begin(), temp.end(), x.begin(), 0.0);
+            x[l] = rs[l] - mul;
+            
             // multiply the right hand side by the parameter ω and add to it the vector x(k) from the previous iteration multiplied by the factor of (1 − ω)
 
-            x[i] = lambda*sum+(1.0-lambda)*old;
+            x[l] = lambda*x[l]+(1.0-lambda)*xold[l];
             // Checking convergence by calculating approximate error
-            if (sentinel == 1 and x[i] != 0) {
-                ea = fabs(x[i]-old/x[i]) * 100;
-            } if (ea > es){     // exit loop if
-                sentinel = 0;
+            if (x[l] != 0) {
+                ea[l] = fabs((x[l]-xold[l])/x[l]) * 100;
             }
         }
+        maxea = *max_element(ea.begin(), ea.end());
+        if (maxea <= es){     // exit loop if
+            sentinel = 0;
+        }
         iter=iter+1;
+        cout << iter << endl;
+
     }
     return x;
+    
 }
 
-
-vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int iter){
-
-    int n = 0, i = 0, j = 0;
+vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int maxit){
     
+    int n = 0, i = 0, j = 0, sentinel = 1, iter =0;
+    double old = 0.0, es, maxea;
     n = int(ls.size());
     
-    vector< double > temp;
+    vector< double > temp,ea,xold;
     temp.reserve(n);
-    
+    ea.reserve(n);
+    xold.reserve(n);
+
     vector< double > y ;
     y.reserve(n);
     
-    while (iter > 0)
+    iter = 0;
+    while (sentinel==1 or iter <= maxit)
     {
+        for (int t=0; t<n; t++) {
+            xold[t] = y[t];
+        }
+
         for (i = 0; i < n; i++)
         {
             y[i] = (rs[i] / ls[i][i]); // right hand side divided by diagonal
@@ -139,9 +161,18 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
                 // Store for output
                 temp[i] = y[i];
             }
+            if (y[i] != 0) {
+                ea[i] = fabs((y[i]-xold[i])/y[i]) * 100;
+            }
         }
-        
-        iter--;
+        maxea = *max_element(ea.begin(), ea.end());
+        if (maxea <= es){     // exit loop if
+            sentinel = 0;
+        }
+
+        iter=iter+1;
+        cout << iter << endl;
+
     }
 
     return temp;
@@ -149,8 +180,8 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
 
 vector<double> gauss_elimination(vector<vector< double > > a) {
 
-    double cur,total,mat;
-    int i,j,k,n,p;
+    double cur,total,mat, maxval;
+    int i,j,k,n,p,maxr;
     n = int(a.size());
     vector<double> temp;
     temp.reserve(n);
@@ -160,13 +191,22 @@ vector<double> gauss_elimination(vector<vector< double > > a) {
         cur = a[i][i];
         
         p = i;
-        
-        // Find largest in the columns
-        for(k = i+1; k < n; k++)
-            if(fabs(cur) < fabs(a[k][i])){
-                cur = a[k][i] ;
-                p = k;
+        // find biggest val in column
+        maxval = abs(a[i][i]);
+        maxr = i;
+        for (int k=i+1; k<n; k++) {
+            if (abs(a[k][i]) > maxval) {
+                maxval = abs(a[k][i]);
+                maxr = k;
             }
+        }
+        
+        // Swap maximum row tih column
+        for (k=i; k<n+1;k++) {
+            double temp = a[maxr][k];
+            a[maxr][k] = a[i][k];
+            a[i][k] = temp;
+        }
         
         // Get the Triangular Matrix // Forward Substitution
         for(j = i+1; j < n; j++){
@@ -174,10 +214,11 @@ vector<double> gauss_elimination(vector<vector< double > > a) {
             for(k=0; k <= n; k++)
                 a[j][k] -= mat * a[i][k];
         }
-        
+    
     }
     
     // Backgrond Substitution
+
     for(i = n-1; i >= 0; i--)
     {
         total = 0;
@@ -185,6 +226,7 @@ vector<double> gauss_elimination(vector<vector< double > > a) {
             total += a[i][j] * temp[j];
         temp[i] = (a[i][n] - total) / a[i][i];
     }
+
 
     return temp;
 }
@@ -195,16 +237,12 @@ int main() {
     int i, n;
     
     // Equations in a vector
-    //vector<vector< double > > a { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} };
     
-    // 6 Equations
-    //vector<vector< double > > a { {0.6, 1, -2, 1, 3, -1, 4},{2, -1, 1, 2, 1, -3, 20},{1, 3, -3, 1, 2, 1, -15},{5, 2, -1, -1, 2, 1, -3},{-3, -1, 2, 3, 1, 3, 16},{4, 3, 1, -6, -3, -2, -27} };
-
     // 4 Equations
-    //vector<vector< double > > a { {10, -1, 2, 0, 6},{-1, 11, -1, 3, 25},{2, -1, 10, -1, -11},{0, 3, -1, 8, 15} };
+    vector<vector< double > > a { {10, -1, 2, 0, 6},{-1, 11, -1, 3, 25},{2, -1, 10, -1, -11},{0, 3, -1, 8, 15} };
     
     // 3 Equations
-    vector<vector< double > > a { { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} } };
+    //vector<vector< double > > a { { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} } };
 
     // 2 Equations
     //vector<vector< double > > a { {3, 2, 18},{-1, 2, 2}};
@@ -236,18 +274,18 @@ int main() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    cout << "------- Gauss Seidel : Jacobi -------" << endl;
+    cout << "------- Gauss Seidel : Iteration -------" << endl;
     
     // 3 Equations
-    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
-    vector <double> rs = {7.85,-19.3,71.4};
+    //vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
+    //vector <double> rs = {7.85,-19.3,71.4};
     
     // 4 Equations
-    //vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
-    //vector<double> rs = {6, 25, -11, 15};
-
+    vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
+    vector<double> rs = {6, 25, -11, 15};
+    
     high_resolution_clock::time_point t3 = high_resolution_clock::now();
-    res_seidal = gauss_seidel(ls,rs,7);
+    res_seidal = gauss_seidel(ls,rs,500);
     high_resolution_clock::time_point t4 = high_resolution_clock::now();
     auto duration2 = duration_cast<microseconds>( t4 - t3 ).count();
     cout << "Time:" << duration2 << " microseconds"<< endl;
@@ -261,7 +299,7 @@ int main() {
     cout << "------- Gauss Seidel : SOR -------" << endl;
 
     high_resolution_clock::time_point t5 = high_resolution_clock::now();
-    res_seidal2 = gauss_seidel_sor(ls,rs,30);
+    res_seidal2 = gauss_seidel_sor(ls,rs,500, 0.00001);
     high_resolution_clock::time_point t6 = high_resolution_clock::now();
     auto duration3 = duration_cast<microseconds>( t6 - t5 ).count();
     cout << "Time:" << duration3 << " microseconds"<< endl;
@@ -270,6 +308,5 @@ int main() {
     for(i=0; i<n; i++)
         cout << "x" << i+1 << ": " << res_seidal2[i] << endl;
     
-
     return 0;
 }
