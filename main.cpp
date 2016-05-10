@@ -24,13 +24,13 @@ using namespace std::chrono;
 
 
 
-double linear_interpolation(vector<vector<double>> points){
+vector<double> linear_regression(vector<vector<double>> points){
     double sumx=0,sumxy=0, sumy=0,sumx2=0;
     int n;
-    
+    vector<double> result;
     n = int(points.size());
     
-    for (int i =0 ; i<=n ; i++ ){
+    for (int i =0 ; i<n ; i++ ){
             sumx=sumx+points[i][0];
             sumy=sumy+points[i][1];
         
@@ -43,10 +43,56 @@ double linear_interpolation(vector<vector<double>> points){
     
     double a1 = (n*sumxy-sumx*sumy)/(n*sumx2-sumx*sumx); //slope
     double a0 = ym-a1*xm;	//bias
+
+    result.push_back(a0);
+    result.push_back(a1);
     
-    return a0, a1;
+    return result;
 }
 
+vector<vector<double> > polynomial_regression (vector<vector<double> > points,int n){
+    int i,j,N;
+    N = int(points.size());
+
+    vector<double> X,Y;
+    X.reserve(2*n+1);
+    Y.reserve(n+1);
+    
+    vector<vector<double>> B(n+1,vector<double>(n+2));
+
+    
+    for (i=0;i<2*n+1;i++)
+    {
+        X[i]=0;
+        for (j=0;j<N;j++)
+            X[i]=X[i]+pow(points[j][0],i);
+    }
+
+    for (i=0;i<=n;i++)
+        for (j=0;j<=n;j++)
+            B[i][j]=X[i+j];
+    //Array to store the values of sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+
+    for (i=0;i<n+1;i++)
+    {
+        Y[i]=0;
+        for (j=0;j<N;j++)
+            Y[i]=Y[i]+pow(points[j][0],i)*points[j][1];
+    }
+    for (i=0;i<=n;i++)
+        B[i][n+1]=Y[i];
+    n=n+1;
+    
+    cout<<"The Normal Matrix"<<endl;
+    for (i=0;i<n;i++)
+    {
+        for (j=0;j<=n;j++)
+            cout<<B[i][j]<<"  ";
+        cout<<"\n";
+    }
+    
+    return B;
+}
 
 vector<double> get_row(vector<vector< double > > C, int row){
     int i, n;
@@ -69,8 +115,8 @@ vector<double> vec_copy(vector< double > a, vector< double > b){
     return b;
 }
 
-vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs, int maxit, double es){
-    int n,i, lambda=1.7, iter,j,k,l;
+vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs, int maxit, double es, double lambda){
+    int n,i, iter,j,k,l;
     double sentinel =1,mul,maxea;
     n = int(ls.size());
     vector< double > x,xold,temp,ea;
@@ -157,6 +203,7 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
                 
                 // Store for output
                 temp[i] = y[i];
+
             }
             if (y[i] != 0) {
                 ea[i] = fabs((y[i]-xold[i])/y[i]) * 100;
@@ -168,7 +215,7 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
         }
 
         iter=iter+1;
-
+//        cout << iter << endl;
     }
 
     return temp;
@@ -230,15 +277,40 @@ vector<double> gauss_elimination(vector<vector< double > > a) {
 
 int main() {
   
-    int i, n;
+    int i, n,j,k;
     
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Section 1
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    vector<vector<double>> polynomial_points {{0,1},{1,1.8},{2,1.3},{3,2.5},{4,6.3}};
+    vector<vector<double>> inter_out_normal;
+    
+    vector<vector<double>> linear_points {{95,85},{85,95},{80,70},{70,65},{60,70}};
+    vector<double> linear_out;
+    k = int(polynomial_points.size());
+    
+    linear_out = linear_regression(linear_points);
+
+    cout << "Bias: " << linear_out[0] <<endl;
+    cout << "Slope: " << linear_out[1] <<endl;
+
+    inter_out_normal = polynomial_regression(polynomial_points,2);
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Section 3
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     // Equations in a vector
     
     // 4 Equations
-    vector<vector< double > > a { {10, -1, 2, 0, 6},{-1, 11, -1, 3, 25},{2, -1, 10, -1, -11},{0, 3, -1, 8, 15} };
+    // vector<vector< double > > a { {10, -1, 2, 0, 6},{-1, 11, -1, 3, 25},{2, -1, 10, -1, -11},{0, 3, -1, 8, 15} };
     
     // 3 Equations
-    //vector<vector< double > > a { { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} } };
+    vector<vector< double > > a { { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} } };
 
     // 2 Equations
     //vector<vector< double > > a { {3, 2, 18},{-1, 2, 2}};
@@ -258,8 +330,10 @@ int main() {
     // Get result as vector
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    res_ele = gauss_elimination(a);
+    //res_ele = gauss_elimination(a);
     
+    res_ele = gauss_elimination(inter_out_normal);
+
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>( t2 - t1 ).count();
     cout << "Time:" << duration << " microseconds"<< endl;
@@ -272,14 +346,14 @@ int main() {
 
     cout << "------- Gauss Seidel : Iteration -------" << endl;
     
-    // 3 Equations
-    //vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
-    //vector <double> rs = {7.85,-19.3,71.4};
-    
+//    // 3 Equations
+    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
+    vector <double> rs = {7.85,-19.3,71.4};
+
     // 4 Equations
-    vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
-    vector<double> rs = {6, 25, -11, 15};
-    
+//    vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
+//    vector<double> rs = {6, 25, -11, 15};
+
     high_resolution_clock::time_point t3 = high_resolution_clock::now();
     res_seidal = gauss_seidel(ls,rs,500);
     high_resolution_clock::time_point t4 = high_resolution_clock::now();
@@ -291,11 +365,11 @@ int main() {
         cout << "x" << i+1 << ": " << res_seidal[i] << endl;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     cout << "------- Gauss Seidel : SOR -------" << endl;
 
     high_resolution_clock::time_point t5 = high_resolution_clock::now();
-    res_seidal2 = gauss_seidel_sor(ls,rs,500, 0.00001);
+    res_seidal2 = gauss_seidel_sor(ls,rs,500, 0.00001, 1);
     high_resolution_clock::time_point t6 = high_resolution_clock::now();
     auto duration3 = duration_cast<microseconds>( t6 - t5 ).count();
     cout << "Time:" << duration3 << " microseconds"<< endl;
@@ -304,5 +378,6 @@ int main() {
     for(i=0; i<n; i++)
         cout << "x" << i+1 << ": " << res_seidal2[i] << endl;
     
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
     return 0;
 }
