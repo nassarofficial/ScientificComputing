@@ -71,7 +71,7 @@ vector<double> vec_copy(vector< double > a, vector< double > b){
 
 vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs, int maxit, double es){
     int n,i, lambda=1.7, iter,j,k,l;
-    double sentinel =1, dummy,mul,maxea;
+    double sentinel =1,mul,maxea;
     n = int(ls.size());
     vector< double > x,xold,temp,ea;
     vector<vector< double > > C;
@@ -98,7 +98,7 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
     
     iter = 0;
 
-    while (sentinel == 1 or iter <= maxit) {
+    while (sentinel == 1 and iter <= maxit) {
         for (int t=0; t<n; t++) {
             xold[t] = x[t];
         }
@@ -121,7 +121,6 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
             sentinel = 0;
         }
         iter=iter+1;
-        cout << iter << endl;
 
     }
     return x;
@@ -131,19 +130,17 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
 vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int maxit){
     
     int n = 0, i = 0, j = 0, sentinel = 1, iter =0;
-    double old = 0.0, es, maxea;
+    double es, maxea;
     n = int(ls.size());
     
-    vector< double > temp,ea,xold;
+    vector< double > temp,ea,xold,y;
     temp.reserve(n);
     ea.reserve(n);
     xold.reserve(n);
-
-    vector< double > y ;
     y.reserve(n);
     
     iter = 0;
-    while (sentinel==1 or iter <= maxit)
+    while (sentinel==1 and iter <= maxit)
     {
         for (int t=0; t<n; t++) {
             xold[t] = y[t];
@@ -171,7 +168,6 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
         }
 
         iter=iter+1;
-        cout << iter << endl;
 
     }
 
