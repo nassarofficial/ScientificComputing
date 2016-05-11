@@ -21,7 +21,27 @@
 
 using namespace std;
 using namespace std::chrono;
+vector<double> plotter(vector< double > points, vector< double > coefficients){
+    cout << "- Plot:" << endl;
 
+    cout << coefficients[0] << endl;
+
+    vector< double > output;
+    double sum=0.0;
+    for (int i = 0; i<points.size(); i++) {
+        
+        for (int j=1; j<coefficients.size(); j++) {
+            sum += coefficients[j]*pow(points[i],j);
+        }
+        
+        sum += coefficients[0];
+        output.push_back(sum);
+        sum = 0.0;
+        cout << output[i] << endl;
+    }
+    
+    return output;
+}
 
 vector<double> get_row(vector<vector< double > > C, int row){
     int i, n;
@@ -289,7 +309,7 @@ int main() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     
     
-    vector<vector<double>> polynomial_points {{0,1},{1,1.8},{2,1.3},{3,2.5},{4,6.3}};
+    vector<vector<double>> polynomial_points {{1,2.5479},{2,2.2404},{3,6.6783},{4,8.4439},{5,7.8052},{6,6.7533},{7,0.0672},{8,6.0217},{9,3.8677}};
     vector<vector<double>> poly_out_normal;
     
     //vector<vector<double>> linear_points {{95,85},{85,95},{80,70},{70,65},{60,70}};
@@ -303,7 +323,7 @@ int main() {
     cout << "Bias: " << linear_out[0] <<endl;
     cout << "Slope: " << linear_out[1] <<endl;
 
-    poly_out_normal = polynomial_regression(polynomial_points,4);
+    poly_out_normal = polynomial_regression(polynomial_points,2);
     
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -332,7 +352,7 @@ int main() {
     n = int(poly_out_normal.size());
     
     // Initialize vector for result
-    vector <double> res_ele;
+    vector <double> res_ele_gauss,res_ele_seidel,res_ele_sor, res_in;
     vector <double> res_seidal, res_seidal2;
     
     
@@ -346,37 +366,46 @@ int main() {
 
     //res_ele = gauss_elimination(a);
     
-    res_ele = gauss_elimination(poly_out_normal);
-
+    res_ele_gauss = gauss_elimination(poly_out_normal);
+    
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>( t2 - t1 ).count();
     cout << "Time:" << duration << " microseconds"<< endl;
 
     // Print Out Result
-    for(i=0; i<n; i++)
-        cout << "x" << i+1 << ": " << res_ele[i] << endl;
-
-    //vector<double> xpoints = {0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4,4.25,4.5,4.75,5,5.25,5.5,5.75,6,6.25,6.5,6.75,7,7.25,7.5,7.75,8,8.25,8.5,8.75,9,9.25,9.5,9.75,10};
-    //vector<double> xpoints = {0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3,3.05,3.1,3.15,3.2,3.25,3.3,3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4,4.05,4.1,4.15,4.2,4.25,4.3,4.35,4.4,4.45,4.5,4.55,4.6,4.65,4.7,4.75,4.8,4.85,4.9,4.95,5,5.05,5.1,5.15,5.2,5.25,5.3,5.35,5.4,5.45,5.5,5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6,6.65,6.7,6.75,6.8,6.85,6.9,6.95,7};
-//
-    vector<double> xpoints = {0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3,3.05,3.1,3.15,3.2,3.25,3.3,3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4,4.05,4.1,4.15,4.2,4.25,4.3,4.35,4.4,4.45,4.5,4.55,4.6,4.65,4.7,4.75,4.8,4.85,4.9,4.95,5,5.05,5.1,5.15,5.2,5.25,5.3,5.35,5.4,5.45,5.5,5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6,6.65,6.7,6.75,6.8,6.85,6.9,6.95,7};
+    for(i=0; i<n; i++){
+        cout << "x" << i+1 << ": " << res_ele_gauss[i] << endl;
+        res_in.push_back(res_ele_gauss[i]);
+    }
     
-//    for (int i = 0; i<140; i++) {
-//        poly_output.push_back(res_ele[0]*xpoints[i]+res_ele[1]*xpoints[i]+res_ele[2]*pow(xpoints[i],2)+res_ele[3]*pow(xpoints[i],3));
-//        cout << poly_output[i] << endl;
-//    }
+    //vector<double> xpoints = {0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3,3.05,3.1,3.15,3.2,3.25,3.3,3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4,4.05,4.1,4.15,4.2,4.25,4.3,4.35,4.4,4.45,4.5,4.55,4.6,4.65,4.7,4.75,4.8,4.85,4.9,4.95,5,5.05,5.1,5.15,5.2,5.25,5.3,5.35,5.4,5.45,5.5,5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6,6.65,6.7,6.75,6.8,6.85,6.9,6.95,7};
+    vector<double> xpoints = {0.001,0.005,0.010,0.015,0.020,0.025,0.030,0.034,0.039,0.044,0.049,0.052,0.057,0.062,0.067,0.071,0.076,0.081,0.085,0.090,0.095,0.099,0.104,0.109,0.114,0.118,0.123,0.128};
 
-    for (int i = 0; i<140; i++) {
-        poly_output.push_back(res_ele[0]*xpoints[i]+res_ele[1]*xpoints[i]+res_ele[2]*pow(xpoints[i],2)+res_ele[3]*pow(xpoints[i],3)+res_ele[4]*pow(xpoints[i],4));
+    //poly_output = plotter(xpoints, res_in);
+    for (int i = 0; i<xpoints.size(); i++) {
+        poly_output.push_back(res_in[0]+(res_in[1]*xpoints[i])+(res_in[2]*pow(xpoints[i],2)));
         cout << poly_output[i] << endl;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Plotting
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    //vector<double> xpoints = {0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4,4.25,4.5,4.75,5,5.25,5.5,5.75,6,6.25,6.5,6.75,7,7.25,7.5,7.75,8,8.25,8.5,8.75,9,9.25,9.5,9.75,10};
+    
+    //vector<double> xpoints = {0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.052.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3,3.05,3.1,3.15,3.2,3.25,3.3,3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4,4.05,4.1,415,4.2,4.25,4.3,4.35,4.4,4.45,4.5,4.55,4.6,4.65,4.7,4.75,4.8,4.85,4.9,4.95,5,5.05,5.1,5.15,5.2,5.25,5.3,5.35,5.4,5.45,5.5,5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6,6.65,6.7,6.75,6.8,6.85,6.9,6.95,7};
+    //
+    
+    
+    
+    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     cout<<"\n";
     cout << "------- Gauss Seidel : Iteration -------" << endl;
     
     
-    res_ele = gauss_elimination(poly_out_normal);
+    res_ele_seidel = gauss_elimination(poly_out_normal);
     
     // 3 Equations
 //    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
@@ -394,29 +423,29 @@ int main() {
     //Polynomials
     
     high_resolution_clock::time_point t3 = high_resolution_clock::now();
-    res_seidal = gauss_seidel(ls,rs,600);
+    res_ele_seidel = gauss_seidel(ls,rs,600);
     high_resolution_clock::time_point t4 = high_resolution_clock::now();
     auto duration2 = duration_cast<microseconds>( t4 - t3 ).count();
     cout << "Time:" << duration2 << " microseconds"<< endl;
 
     // Print Out Result
     for(i=0; i<n; i++)
-        cout << "x" << i+1 << ": " << res_seidal[i] << endl;
+        cout << "x" << i+1 << ": " << res_ele_seidel[i] << endl;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     cout<<"\n";
     cout << "------- Gauss Seidel : SOR -------" << endl;
 
     high_resolution_clock::time_point t5 = high_resolution_clock::now();
-    res_seidal2 = gauss_seidel_sor(ls,rs,600, 0.00001, 1.0);
+    res_ele_sor = gauss_seidel_sor(ls,rs,600, 0.00001, 1.0);
     high_resolution_clock::time_point t6 = high_resolution_clock::now();
     auto duration3 = duration_cast<microseconds>( t6 - t5 ).count();
     cout << "Time:" << duration3 << " microseconds"<< endl;
 
     // Print Out Result
     for(i=0; i<n; i++)
-        cout << "x" << i+1 << ": " << res_seidal2[i] << endl;
+        cout << "x" << i+1 << ": " << res_ele_sor[i] << endl;
     
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
     return 0;
 }
