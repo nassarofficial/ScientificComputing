@@ -6,6 +6,7 @@
 //  Copyright © 2016 Ahmed Nassar. All rights reserved.
 //
 #include <stdlib.h>
+#include "Interpolation.h"
 #include <stdio.h>
 #include <math.h>
 #include <vector>
@@ -21,11 +22,22 @@
 
 using namespace std;
 using namespace std::chrono;
+
+
+void printArray(double a[], int n){
+    for (int i = 0; i<n; i++){
+        cout << a[i] << " ";
+    }
+    cout << "\n";
+}
+
+
+
 vector<double> plotter(vector< double > points, vector< double > coefficients){
     cout << "- Plot:" << endl;
-
+    
     cout << coefficients[0] << endl;
-
+    
     vector< double > output;
     double sum=0.0;
     for (int i = 0; i<points.size(); i++) {
@@ -74,11 +86,11 @@ vector<double> linear_regression(vector<vector<double>> points){
     n = int(points.size());
     
     for (int i =0 ; i<n ; i++ ){
-            sumx=sumx+points[i][0];
-            sumy=sumy+points[i][1];
+        sumx=sumx+points[i][0];
+        sumy=sumy+points[i][1];
         
-            sumxy=sumxy+points[i][0]*points[i][1];
-            sumx2=sumx2+points[i][0]*points[i][0];
+        sumxy=sumxy+points[i][0]*points[i][1];
+        sumx2=sumx2+points[i][0]*points[i][0];
     }
     
     double xm=sumx/n;
@@ -86,7 +98,7 @@ vector<double> linear_regression(vector<vector<double>> points){
     
     double a1 = (n*sumxy-sumx*sumy)/(n*sumx2-sumx*sumx); //slope
     double a0 = ym-a1*xm;	//bias
-
+    
     result.push_back(a0);
     result.push_back(a1);
     
@@ -96,13 +108,13 @@ vector<double> linear_regression(vector<vector<double>> points){
 vector<vector<double> > polynomial_regression (vector<vector<double> > points,int n){
     int i,j,N;
     N = int(points.size());
-
+    
     vector<double> X,Y;
     X.reserve(2*n+1);
     Y.reserve(n+1);
     
     vector<vector<double>> B(n+1,vector<double>(n+2));
-
+    
     
     for (i=0;i<2*n+1;i++)
     {
@@ -110,12 +122,12 @@ vector<vector<double> > polynomial_regression (vector<vector<double> > points,in
         for (j=0;j<N;j++)
             X[i]=X[i]+pow(points[j][0],i);
     }
-
+    
     for (i=0;i<=n;i++)
         for (j=0;j<=n;j++)
             B[i][j]=X[i+j];
     //Array to store the values of sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
-
+    
     for (i=0;i<n+1;i++)
     {
         Y[i]=0;
@@ -134,7 +146,7 @@ vector<vector<double> > polynomial_regression (vector<vector<double> > points,in
         cout<<"\n";
         
     }
-
+    
     return B;
 }
 
@@ -147,10 +159,10 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
     vector<vector< double > > C;
     x.reserve(n);
     xold.reserve(n);
-
+    
     temp.reserve(n);
     ea.reserve(n);
-
+    
     C = ls;
     for (k=0; k<n; k++) {
         C[k][k] = 0.0;
@@ -167,7 +179,7 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
     }
     
     iter = 0;
-
+    
     while (sentinel == 1 and iter <= maxit) {
         for (int t=0; t<n; t++) {
             xold[t] = x[t];
@@ -179,7 +191,7 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
             x[l] = rs[l] - mul;
             
             // multiply the right hand side by the relaxation
-
+            
             x[l] = lambda*x[l]+(1.0-lambda)*xold[l];
             // Checking convergence by calculating approximate error
             if (x[l] != 0) {
@@ -192,8 +204,8 @@ vector<double> gauss_seidel_sor(vector<vector< double > > ls,vector< double > rs
         }
         iter=iter+1;
     }
-//    cout << iter << endl;
-
+    //    cout << iter << endl;
+    
     return x;
     
 }
@@ -216,7 +228,7 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
         for (int t=0; t<n; t++) {
             xold[t] = y[t];
         }
-
+        
         for (i = 0; i < n; i++)
         {
             y[i] = (rs[i] / ls[i][i]); // right hand side divided by diagonal
@@ -228,7 +240,7 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
                 
                 // Store for output
                 temp[i] = y[i];
-
+                
             }
             if (y[i] != 0) {
                 ea[i] = fabs((y[i]-xold[i])/y[i]) * 100;
@@ -238,16 +250,16 @@ vector<double> gauss_seidel(vector<vector< double > > ls,vector< double > rs,int
         if (maxea <= es){     // exit loop if
             sentinel = 0;
         }
-
+        
         iter=iter+1;
     }
-//    cout << iter << endl;
-
+    //    cout << iter << endl;
+    
     return temp;
 }
 
 vector<double> gauss_elimination(vector<vector< double > > a) {
-
+    
     double cur,total,mat, maxval;
     int i,j,k,n,p,maxr;
     n = int(a.size());
@@ -282,11 +294,11 @@ vector<double> gauss_elimination(vector<vector< double > > a) {
             for(k=0; k <= n; k++)
                 a[j][k] -= mat * a[i][k];
         }
-    
+        
     }
     
     // Backgrond Substitution
-
+    
     for(i = n-1; i >= 0; i--)
     {
         total = 0;
@@ -294,56 +306,81 @@ vector<double> gauss_elimination(vector<vector< double > > a) {
             total += a[i][j] * temp[j];
         temp[i] = (a[i][n] - total) / a[i][i];
     }
-
-
+    
+    
     return temp;
 }
 
 
 int main() {
-  
+    
     int i,n,k;
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Section 1
+    // Linear & Polynomial Regression
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     
-    
-    vector<vector<double>> polynomial_points {{1,2.5479},{2,2.2404},{3,6.6783},{4,8.4439},{5,7.8052},{6,6.7533},{7,0.0672},{8,6.0217},{9,3.8677}};
-    vector<vector<double>> poly_out_normal;
-    
-    //vector<vector<double>> linear_points {{95,85},{85,95},{80,70},{70,65},{60,70}};
     vector<vector<double>> linear_points {{-0.20707,-0.319029},{0.706672,0.0931669},{1.63739,2.17286},{2.03117,2.76818},{3.31874,3.56743},{5.38201,4.11772},{6.79971,5.52709},{6.31814,7.46613},{8.20829,8.7654},{8.53994,9.58096}};
-
+    
+    vector<vector<double>> polynomial_points {{1,4.0014},{2,0.7094},{3,2.1088},{4,4.5786},{5,3.9610},{6,4.7975},{7,3.2787},{8,4.2456},{9,4.6699},{10,3.3936},{11,3.7887},{12,3.7156},{13,3.2774},{14,3.5302}};
+    
+    
     vector<double> linear_out, poly_output;
     k = int(polynomial_points.size());
     
+    // linear regression
+    cout<<"------- Linear Regression -------"<<endl;
+    cout << "\n" << endl;
     linear_out = linear_regression(linear_points);
-
-    cout << "Bias: " << linear_out[0] <<endl;
-    cout << "Slope: " << linear_out[1] <<endl;
-
-    poly_out_normal = polynomial_regression(polynomial_points,2);
+    
+    cout << "Bias: " << linear_out[0] <<endl; // bias of the line
+    cout << "Slope: " << linear_out[1] <<endl;  // slope of the line
+    
+    
+    // polynomial regression
+    vector<vector<double>> poly_out_normal;
+    
+    poly_out_normal = polynomial_regression(polynomial_points,2); // normal equations
     
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Section 2
+    // Cubic Spline and Newton Interpolation
     ////////////////////////////////////////////////////////////////////////////////////////////////////
+    double newton_test[]   = {1,4,6,5,3,1.5,2.5}; //3.5
+    double newton_values[] = {0.0,1.3862944,1.7917595,1.6094379,1.0986123,0.4054641,0.9162907}; //1.2527630
+    double spline_test[]   = {3,4.5,7};
+    double spline_values[] = {2.5,1,2.5};
+    double newton_point    = 3.5;
+    double spline_point    = 5;
+    Interpolation interpolate ;
+    cout << "\n" << endl;
+    cout << "-------------------------------------------" << endl;
 
+    cout << "Test Data of Newton Interpolation\n";
+    cout << "\n" << endl;
+
+    printArray(newton_test, 7);
+    printArray(newton_values, 7);
+    cout << "Newton Interpolation of point " << newton_point << " is: " << interpolate.NewtInt(newton_test, newton_values, newton_point ,7) << "\n\n";
+    cout << "Test Data of Cubic Spline\n";
+    printArray(spline_test, 3);
+    printArray(spline_values, 3);
+    cout << "\nSpline Interpolation of point " << spline_point << " is: " << interpolate.Spline(spline_test, spline_values, spline_point ,3);
+    
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // Section 3
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
+    
+    
     // Equations in a vector
     
-    // 4 Equations
+    // 4 Equations SYSTEM B as in Report
     // vector<vector< double > > a { {10, -1, 2, 0, 6},{-1, 11, -1, 3, 25},{2, -1, 10, -1, -11},{0, 3, -1, 8, 15} };
     
-    // 3 Equations
+    // 3 Equations SYSTEM A as in Report
     vector<vector< double > > a { { {3, -0.1, -0.2, 7.85},{0.1, 7, -0.3, -19.3},{0.3, -0.2, 10, 71.4} } };
-
+    
     // 2 Equations
     //vector<vector< double > > a { {3, 2, 18},{-1, 2, 2}};
     
@@ -357,13 +394,13 @@ int main() {
     
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    cout<<"\n";
+    
+    cout << "\n" << endl;
     cout << "------- Gauss Elimination -------" << endl;
-
+    
     // Get result as vector
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
-
+    
     //res_ele = gauss_elimination(a);
     
     res_ele_gauss = gauss_elimination(poly_out_normal);
@@ -371,35 +408,32 @@ int main() {
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>( t2 - t1 ).count();
     cout << "Time:" << duration << " microseconds"<< endl;
-
+    
     // Print Out Result
     for(i=0; i<n; i++){
         cout << "x" << i+1 << ": " << res_ele_gauss[i] << endl;
         res_in.push_back(res_ele_gauss[i]);
     }
     
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Plotting
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //vector<double> xpoints = {0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.05,2.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3,3.05,3.1,3.15,3.2,3.25,3.3,3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4,4.05,4.1,4.15,4.2,4.25,4.3,4.35,4.4,4.45,4.5,4.55,4.6,4.65,4.7,4.75,4.8,4.85,4.9,4.95,5,5.05,5.1,5.15,5.2,5.25,5.3,5.35,5.4,5.45,5.5,5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6,6.65,6.7,6.75,6.8,6.85,6.9,6.95,7};
     vector<double> xpoints = {0.001,0.005,0.010,0.015,0.020,0.025,0.030,0.034,0.039,0.044,0.049,0.052,0.057,0.062,0.067,0.071,0.076,0.081,0.085,0.090,0.095,0.099,0.104,0.109,0.114,0.118,0.123,0.128};
-
+    
     //poly_output = plotter(xpoints, res_in);
+    cout << "\n" << endl;
+    cout << "Plotting points:" << endl;
+
     for (int i = 0; i<xpoints.size(); i++) {
         poly_output.push_back(res_in[0]+(res_in[1]*xpoints[i])+(res_in[2]*pow(xpoints[i],2)));
         cout << poly_output[i] << endl;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Plotting
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    //vector<double> xpoints = {0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4,4.25,4.5,4.75,5,5.25,5.5,5.75,6,6.25,6.5,6.75,7,7.25,7.5,7.75,8,8.25,8.5,8.75,9,9.25,9.5,9.75,10};
-    
-    //vector<double> xpoints = {0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2,2.052.1,2.15,2.2,2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3,3.05,3.1,3.15,3.2,3.25,3.3,3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4,4.05,4.1,415,4.2,4.25,4.3,4.35,4.4,4.45,4.5,4.55,4.6,4.65,4.7,4.75,4.8,4.85,4.9,4.95,5,5.05,5.1,5.15,5.2,5.25,5.3,5.35,5.4,5.45,5.5,5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6,6.65,6.7,6.75,6.8,6.85,6.9,6.95,7};
-    //
     
     
     
-    
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     cout<<"\n";
     cout << "------- Gauss Seidel : Iteration -------" << endl;
@@ -408,17 +442,17 @@ int main() {
     res_ele_seidel = gauss_elimination(poly_out_normal);
     
     // 3 Equations
-//    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
-//    vector <double> rs = {7.85,-19.3,71.4};
-
+    //    vector <vector<double>> ls = { {3, -0.1, -0.2},{0.1, 7, -0.3},{0.3, -0.2, 10} };
+    //    vector <double> rs = {7.85,-19.3,71.4};
+    
     
     vector <vector<double>> ls {{5,10,30},{10,30,100,37.1},{30,100,354,130.3}};
     vector <double> rs = {12.9,37.1,130.3};
     
     // 4 Equations
-//    vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
-//    vector<double> rs = {6, 25, -11, 15};
-
+    //    vector<vector<double>> ls = { {10, -1, 2, 0},{-1, 11, -1, 3},{2, -1, 10, -1},{0, 3, -1, 8} };
+    //    vector<double> rs = {6, 25, -11, 15};
+    
     
     //Polynomials
     
@@ -427,25 +461,26 @@ int main() {
     high_resolution_clock::time_point t4 = high_resolution_clock::now();
     auto duration2 = duration_cast<microseconds>( t4 - t3 ).count();
     cout << "Time:" << duration2 << " microseconds"<< endl;
-
+    
     // Print Out Result
     for(i=0; i<n; i++)
         cout << "x" << i+1 << ": " << res_ele_seidel[i] << endl;
-
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     cout<<"\n";
     cout << "------- Gauss Seidel : SOR -------" << endl;
-
+    
     high_resolution_clock::time_point t5 = high_resolution_clock::now();
     res_ele_sor = gauss_seidel_sor(ls,rs,600, 0.00001, 1.0);
     high_resolution_clock::time_point t6 = high_resolution_clock::now();
     auto duration3 = duration_cast<microseconds>( t6 - t5 ).count();
     cout << "Time:" << duration3 << " microseconds"<< endl;
-
+    
     // Print Out Result
     for(i=0; i<n; i++)
         cout << "x" << i+1 << ": " << res_ele_sor[i] << endl;
     
-
+    
     return 0;
 }
